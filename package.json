@@ -1,6 +1,6 @@
 {
   "name": "marvinj-ts",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A typescript port of the marvinj library",
   "main": "index.js",
   "scripts": {
