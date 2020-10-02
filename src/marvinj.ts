@@ -135,20 +135,19 @@ export class MarvinImage {
 	image: any;
 	canvas: any;
 	ctx: CanvasRenderingContext2D | undefined;
-	data: any;
+	data: Uint8ClampedArray;
 	colorModel: any;
 	arrBinaryColor: any;
-	imageData: ImageData | any;
 	width: number;
 	height: number;
 	onload: any;
 
-	constructor(width?: number, height?: number, colorModel?: COLOR_MODEL) {
+	constructor(width: number = -1, height: number = -1, colorModel?: COLOR_MODEL) {
 		// properties
 		this.image = null;
 		this.canvas = null;
 		this.ctx = undefined;
-		this.data = null;
+		this.data = new Uint8ClampedArray();
 		this.width = 0;
 		this.height = 0;
 		
@@ -158,7 +157,7 @@ export class MarvinImage {
 			this.colorModel = colorModel;
 		}
 		
-		if(width != null && height != null){
+		if(width >= 0 && height >= 0){
 			this.create(width, height);
 		}
 		
@@ -168,12 +167,7 @@ export class MarvinImage {
 	}
 
 	create(width: number, height: number){
-		this.canvas = document.createElement('canvas');
-		this.canvas.width = width;
-		this.canvas.height = height;
-		this.ctx = this.canvas.getContext("2d");
-		if (this.ctx == undefined) return;
-		this.imageData = this.ctx.getImageData(0, 0, width, height);
+		this.data = new Uint8ClampedArray(width * height * 4);
 		this.width = width;
 		this.height = height;
 	}
@@ -212,7 +206,7 @@ export class MarvinImage {
 		if (marvinImage.ctx == undefined) return;
 		marvinImage.ctx.drawImage(marvinImage.image, 0, 0);
 		
-		this.imageData = marvinImage.ctx.getImageData(0, 0, marvinImage.width, marvinImage.height);
+		this.data = marvinImage.ctx.getImageData(0, 0, marvinImage.width, marvinImage.height).data;
 		
 		if(marvinImage.onload!=null){
 			marvinImage.onload();
@@ -225,8 +219,17 @@ export class MarvinImage {
 		return image;
 	}
 
+	loadImageData(): ImageData {
+		const imageData = new ImageData(this.width, this.height);
+		for (let i = 0; i < this.width * this.height * 4; i++) {
+			imageData.data[i] = this.data[i];
+		}
+
+		return imageData;
+	}
+
 	update() {
-		this.canvas.getContext("2d").putImageData(this.imageData, 0,0);
+		this.canvas.getContext("2d").putImageData(this.loadImageData(), 0,0);
 	}
 
 	clear(color: any) {
@@ -239,24 +242,24 @@ export class MarvinImage {
 
 	getAlphaComponent(x: number, y: number) {
 		var start = ((y*this.width)+x)*4; 
-		return this.imageData.data[start+3];
+		return this.data[start+3];
 	}
 	setAlphaComponent(x: number, y: number, alpha: number) {
 		var start = ((y*this.width)+x)*4; 
-		this.imageData.data[start+3] = alpha;
+		this.data[start+3] = alpha;
 	}
 
 	getIntComponent0(x: number, y: number) {
 		var start = ((y*this.width)+x)*4; 
-		return this.imageData.data[start];
+		return this.data[start];
 	}
 	getIntComponent1(x: number, y: number) {
 		var start = ((y*this.width)+x)*4; 
-		return this.imageData.data[start+1];
+		return this.data[start+1];
 	}
 	getIntComponent2(x: number, y: number) {
 		var start = ((y*this.width)+x)*4; 
-		return this.imageData.data[start+2];
+		return this.data[start+2];
 	}
 
 	setIntColor(x: number, y: number, a1: any, a2?: any, a3?: any, a4?: any) {
@@ -276,10 +279,10 @@ export class MarvinImage {
 		var start = ((y*this.width)+x)*4;
 		
 		return 	0x100000000 + 
-				(this.imageData.data[start+3] << 24) + 
-				(this.imageData.data[start] << 16) +
-				(this.imageData.data[start+1] << 8) +
-				(this.imageData.data[start+2]);
+				(this.data[start+3] << 24) + 
+				(this.data[start] << 16) +
+				(this.data[start+1] << 8) +
+				(this.data[start+2]);
 	}
 
 	setIntColor1(x: number, y: number, color: any) {
@@ -303,8 +306,8 @@ export class MarvinImage {
 		if(this.colorModel == imgDestine.colorModel){
 			switch(this.colorModel){
 				case COLOR_MODEL_RGB:
-					for(var i=0; i<this.imageData.data.length; i++){
-						imgDestine.imageData.data[i] = this.imageData.data[i];
+					for(var i=0; i<this.data.length; i++){
+						imgDestine.data[i] = this.data[i];
 					}
 					break;
 				case COLOR_MODEL_BINARY:
@@ -369,10 +372,10 @@ export class MarvinImage {
 	}
 	setIntColor4(x: number, y: number, alpha: number, r: number, g: number, b: number) {
 		var start = ((y*this.width)+x)*4;
-		this.imageData.data[start] = r;
-		this.imageData.data[start+1] = g;
-		this.imageData.data[start+2] = b;
-		this.imageData.data[start+3] = alpha;
+		this.data[start] = r;
+		this.data[start+1] = g;
+		this.data[start+2] = b;
+		this.data[start+3] = alpha;
 	}
 
 	isValidPosition(x: number, y: number) {
@@ -387,7 +390,7 @@ export class MarvinImage {
 		if(y == null){y=0;}
 		const context = canvas.getContext("2d");
 		if (context == undefined) return;
-		context.putImageData(this.imageData, x,y);/*
+		context.putImageData(this.loadImageData(), x,y);/*
 		if(alphaCombination == null || !alphaCombination){
 			canvas.getContext("2d").putImageData(this.imageData, x,y);
 		} else{
@@ -1725,7 +1728,6 @@ class ErrorDiffusion extends MarvinAbstractImagePlugin {
 	}
 
 	process(imageIn: MarvinImage, imageOut: MarvinImage, mask: any) {
-		var color;
 		var dif;
 
 		Marvin.grayScale(imageIn, imageOut);
@@ -1742,7 +1744,7 @@ class ErrorDiffusion extends MarvinAbstractImagePlugin {
 					continue;
 				}
 				
-				var color = imageOut.getIntComponent0(x, y);
+				let color = imageOut.getIntComponent0(x, y);
 				if(color > this.threshold){
 					imageOut.setIntColor(x,y,imageIn.getAlphaComponent(x,y), 255,255,255);
 					dif = -(255-color);
