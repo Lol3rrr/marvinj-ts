@@ -2,9 +2,9 @@
   "name": "marvinj-ts",
   "version": "0.1.2",
   "description": "A typescript port of the marvinj library",
-  "main": "index.js",
+  "main": "marvinj.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "build": "tsc",
     "build:watch": "tsc --watch"
   },
@@ -18,6 +18,9 @@
   "author": "Lol3r",
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^26.0.14",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.4.1",
     "typescript": "^4.0.3"
   }
 }
