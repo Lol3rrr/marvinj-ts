@@ -1,11 +1,29 @@
 name: npm-publish
-on:
-  push:
-    branches:
-      - master
+on: push
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@master
+
+      - name: Set up Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: 14
+          registry-url: https://registry.npmjs.org/
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run Tests
+        run: npm run test
+
   npm-publish:
     name: npm-publish
+    needs: test
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
